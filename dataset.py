@@ -1,0 +1,101 @@
+from pathlib import Path
+from typing import Generator
+from typing import Sequence
+from urllib.parse import unquote
+
+from click import argument
+from click import command
+from click import option
+from click import Path as ClickPath
+from xmltodict import parse as parse_xml
+
+
+def find_file(path: Path, name: str) -> Generator[Path, None, None]:
+    if not path.is_dir():
+        raise NotADirectoryError(path)
+
+    items = [f for f in path.iterdir() if f.is_file() or f.is_dir()]
+
+    if file := next((f for f in items if f.is_file() and f.name == name), None):
+        yield file
+    else:
+        yield from (f for d in items if d.is_dir() for f in find_file(d, name))
+
+
+def dataset_generator(root: Path, collections: Sequence[int]) -> Generator[dict[str, any], None, None]:
+    for metadata_path in find_file(root.resolve(), "metadata.xml"):
+        metadata_root: Path = metadata_path.parent
+        metadata: dict = parse_xml(metadata_path.read_text("utf-8"), force_list=("colList",))
+
+        doc_collections: list[int] = [int(c["colId"]) for c in metadata["trpDocMetadata"]["collectionList"]["colList"]]
+        if collections and not set(collections).intersection(doc_collections):
+            return
+
+        authority: str = metadata["trpDocMetadata"]["uploader"].partition("@")[2]
+        doc_id: int = int(metadata["trpDocMetadata"]["docId"])
+        title: str = metadata["trpDocMetadata"]["title"]
+        script_type: str = metadata["trpDocMetadata"].get("scriptType", "HANDWRITTEN")
+
+        mets: dict = parse_xml(metadata_root.joinpath("mets.xml").read_text("utf-8"))
+        paths: dict[str, str] = {
+            file["@ID"]: unquote(file["ns3:FLocat"]["@ns2:href"])
+            for group in mets["ns3:mets"]["ns3:fileSec"]["ns3:fileGrp"]["ns3:fileGrp"]
+            for file in group["ns3:file"]
+        }
+
+        for struct in mets["ns3:mets"]["ns3:structMap"]["ns3:div"]["ns3:div"]:
+            img_id = next((i for f in struct["ns3:fptr"] if (i := f["ns3:area"]["@FILEID"]).startswith("IMG_")), None)
+            alto_id = next((i for f in struct["ns3:fptr"] if (i := f["ns3:area"]["@FILEID"]).startswith("ALTO_")), None)
+            page_id = next(
+                (i for f in struct["ns3:fptr"] if (i := f["ns3:area"]["@FILEID"]).startswith("PAGEXML_")), None
+            )
+            yield {
+                "image": str(metadata_root.joinpath(paths[img_id])),
+                "authority": authority,
+                "docId": doc_id,
+                "docTitle": title,
+                "scriptType": script_type,
+                "sequence": struct["@ORDER"],
+                "alto": metadata_root.joinpath(paths[alto_id]).read_text("utf-8") if alto_id else "",
+                "page": metadata_root.joinpath(paths[page_id]).read_text("utf-8") if page_id else "",
+            }
+
+
+@command("transkribus-dataset")
+@argument("repository", required=True)
+@argument("folder", type=ClickPath(exists=True, file_okay=False, readable=True, resolve_path=True))
+@option("--config-name", type=str, default="default")
+@option("--collection", type=int, multiple=True)
+@option("--token", type=str, envvar="HUGGINGFACE_TOKEN", default=None, show_envvar=True)
+def app_transkribus(repository: str, folder: str, config_name: str, collection: tuple[int, ...], token: str | None):
+    print("Loading dataset... ", end="\r", flush=True)
+    from datasets import Dataset
+    from datasets.features import Features
+    from datasets.features import Image
+    from datasets.features import Value
+
+    dataset: Dataset = Dataset.from_generator(
+        lambda: dataset_generator(Path(folder), collection),
+        features=Features(
+            {
+                "image": Image(),
+                "authority": Value("string"),
+                "docId": Value("int64"),
+                "docTitle": Value("string"),
+                "scriptType": Value("string"),
+                "sequence": Value("int16"),
+                "alto": Value("string"),
+                "page": Value("string"),
+            }
+        ),
+        config_name=config_name,
+    )
+    print("Dataset loaded     ")
+
+    print("Pushing dataset... ", end="\r", flush=True)
+    dataset.push_to_hub(repository, config_name=config_name, token=token)
+    print("Dataset Pushed     ")
+
+
+if __name__ == "__main__":
+    app_transkribus()
