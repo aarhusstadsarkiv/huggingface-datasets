@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Generator
+from typing import Optional
 from typing import Sequence
 from urllib.parse import unquote
 
@@ -14,9 +15,10 @@ def find_file(path: Path, name: str) -> Generator[Path, None, None]:
     if not path.is_dir():
         raise NotADirectoryError(path)
 
-    items = [f for f in path.iterdir() if f.is_file() or f.is_dir()]
+    items: list[Path] = [f for f in path.iterdir() if f.is_file() or f.is_dir()]
+    file: Optional[Path] = next((f for f in items if f.is_file() and f.name == name), None)
 
-    if file := next((f for f in items if f.is_file() and f.name == name), None):
+    if file:
         yield file
     else:
         yield from (f for d in items if d.is_dir() for f in find_file(d, name))
@@ -67,7 +69,7 @@ def dataset_generator(root: Path, collections: Sequence[int]) -> Generator[dict[
 @option("--config-name", type=str, default="default")
 @option("--collection", type=int, multiple=True)
 @option("--token", type=str, envvar="HUGGINGFACE_TOKEN", default=None, show_envvar=True)
-def app_transkribus(repository: str, folder: str, config_name: str, collection: tuple[int, ...], token: str | None):
+def app_transkribus(repository: str, folder: str, config_name: str, collection: tuple[int, ...], token: Optional[str]):
     print("Loading dataset... ", end="\r", flush=True)
     from datasets import Dataset
     from datasets.features import Features
