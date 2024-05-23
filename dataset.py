@@ -24,7 +24,7 @@ def find_file(path: Path, name: str) -> Generator[Path, None, None]:
         yield from (f for d in items if d.is_dir() for f in find_file(d, name))
 
 
-def dataset_generator(root: Path, collections: Sequence[int]) -> Generator[dict[str, any], None, None]:
+def dataset_generator_transkribus(root: Path, collections: Sequence[int]) -> Generator[dict[str, any], None, None]:
     for metadata_path in find_file(root.resolve(), "metadata.xml"):
         metadata_root: Path = metadata_path.parent
         metadata: dict = parse_xml(metadata_path.read_text("utf-8"), force_list=("colList",))
@@ -77,7 +77,7 @@ def app_transkribus(repository: str, folder: str, config_name: str, collection: 
     from datasets.features import Value
 
     dataset: Dataset = Dataset.from_generator(
-        lambda: dataset_generator(Path(folder), collection),
+        lambda: dataset_generator_transkribus(Path(folder), collection),
         features=Features(
             {
                 "image": Image(),
