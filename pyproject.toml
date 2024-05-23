@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "dataset"
+version = "0.1.0"
+description = ""
+authors = ["Matteo Campinoti <matteo.campinoti94@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+xmltodict = "^0.13.0"
+huggingface-hub = "^0.23.1"
+datasets = "^2.19.1"
+pillow = "^10.3.0"
+pandas = "^2.2.2"
+click = "^8.1.7"
+
+[tool.poetry.scripts]
+"transkribus-dataset" = "dataset:app_transkribus"
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.4.2"
+types-click = "^7.1.8"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
