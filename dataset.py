@@ -36,7 +36,6 @@ def dataset_generator_transkribus(root: Path, collections: Sequence[int]) -> Gen
         authority: str = metadata["trpDocMetadata"]["uploader"].partition("@")[2]
         doc_id: int = int(metadata["trpDocMetadata"]["docId"])
         title: str = metadata["trpDocMetadata"]["title"]
-        script_type: str = metadata["trpDocMetadata"].get("scriptType", "HANDWRITTEN")
 
         mets: dict = parse_xml(metadata_root.joinpath("mets.xml").read_text("utf-8"))
         paths: dict[str, str] = {
@@ -53,10 +52,8 @@ def dataset_generator_transkribus(root: Path, collections: Sequence[int]) -> Gen
             )
             yield {
                 "image": str(metadata_root.joinpath(paths[img_id])),
-                "authority": authority,
                 "docId": doc_id,
                 "docTitle": title,
-                "scriptType": script_type,
                 "sequence": struct["@ORDER"],
                 "alto": metadata_root.joinpath(paths[alto_id]).read_text("utf-8") if alto_id else "",
                 "page": metadata_root.joinpath(paths[page_id]).read_text("utf-8") if page_id else "",
@@ -81,10 +78,8 @@ def app_transkribus(repository: str, folder: str, config_name: str, collection: 
         features=Features(
             {
                 "image": Image(),
-                "authority": Value("string"),
                 "docId": Value("int64"),
                 "docTitle": Value("string"),
-                "scriptType": Value("string"),
                 "sequence": Value("int16"),
                 "alto": Value("string"),
                 "page": Value("string"),
