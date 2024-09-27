@@ -33,7 +33,6 @@ def dataset_generator_transkribus(root: Path, collections: Sequence[int]) -> Gen
         if collections and not set(collections).intersection(doc_collections):
             return
 
-        authority: str = metadata["trpDocMetadata"]["uploader"].partition("@")[2]
         doc_id: int = int(metadata["trpDocMetadata"]["docId"])
         title: str = metadata["trpDocMetadata"]["title"]
 
