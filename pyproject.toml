@@ -8,10 +8,10 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.9"
 xmltodict = "^0.13.0"
-huggingface-hub = "^0.23.1"
-datasets = "^2.19.1"
-pillow = "^10.3.0"
-pandas = "^2.2.2"
+huggingface-hub = "^0.25.1"
+datasets = "^3.0.1"
+pillow = "^10.4.0"
+pandas = "^2.2.3"
 click = "^8.1.7"
 
 [tool.poetry.scripts]
