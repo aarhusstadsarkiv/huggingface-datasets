@@ -59,7 +59,7 @@ def dataset_generator_transkribus(root: Path, collections: Sequence[int]) -> Gen
             )
             yield {
                 "image": str(metadata_root.joinpath(paths[img_id])),
-                "docId": doc_id,
+                "doc_id": doc_id,
                 "sequence": struct["@ORDER"],
                 "alto": metadata_root.joinpath(paths[alto_id]).read_text("utf-8") if alto_id else "",
                 "page": remove_transkribus_metadata(metadata_root.joinpath(paths[page_id]).read_text("utf-8")) if page_id else "",
@@ -84,7 +84,7 @@ def app_transkribus(repository: str, folder: str, config_name: str, collection: 
         features=Features(
             {
                 "image": Image(),
-                "docId": Value("int64"),
+                "doc_id": Value("int64"),
                 "sequence": Value("int16"),
                 "alto": Value("string"),
                 "page": Value("string"),
