@@ -1,3 +1,4 @@
+from re import compile as re_compile
 from pathlib import Path
 from typing import Generator
 from typing import Optional
@@ -11,6 +12,9 @@ from click import Path as ClickPath
 from xmltodict import parse as parse_xml
 
 
+transkribus_metadata_tag_pattern = re_compile(r"\s*<TranskribusMetadata[^>]*/?>([^<]*</TranskribusMetadata>)?")
+
+
 def find_file(path: Path, name: str) -> Generator[Path, None, None]:
     if not path.is_dir():
         raise NotADirectoryError(path)
@@ -22,6 +26,10 @@ def find_file(path: Path, name: str) -> Generator[Path, None, None]:
         yield file
     else:
         yield from (f for d in items if d.is_dir() for f in find_file(d, name))
+
+
+def remove_transkribus_metadata(xml: str) -> str:
+    return transkribus_metadata_tag_pattern.sub("", xml)
 
 
 def dataset_generator_transkribus(root: Path, collections: Sequence[int]) -> Generator[dict[str, any], None, None]:
@@ -55,7 +63,7 @@ def dataset_generator_transkribus(root: Path, collections: Sequence[int]) -> Gen
                 "docTitle": title,
                 "sequence": struct["@ORDER"],
                 "alto": metadata_root.joinpath(paths[alto_id]).read_text("utf-8") if alto_id else "",
-                "page": metadata_root.joinpath(paths[page_id]).read_text("utf-8") if page_id else "",
+                "page": remove_transkribus_metadata(metadata_root.joinpath(paths[page_id]).read_text("utf-8")) if page_id else "",
             }
 
 
