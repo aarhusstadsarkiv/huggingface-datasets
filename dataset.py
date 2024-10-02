@@ -42,7 +42,6 @@ def dataset_generator_transkribus(root: Path, collections: Sequence[int]) -> Gen
             return
 
         doc_id: int = int(metadata["trpDocMetadata"]["docId"])
-        title: str = metadata["trpDocMetadata"]["title"]
 
         mets: dict = parse_xml(metadata_root.joinpath("mets.xml").read_text("utf-8"))
         paths: dict[str, str] = {
