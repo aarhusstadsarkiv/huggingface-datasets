@@ -1,5 +1,6 @@
 from re import compile as re_compile
 from pathlib import Path
+from typing import Any
 from typing import Generator
 from typing import Optional
 from typing import Sequence
@@ -32,7 +33,7 @@ def remove_transkribus_metadata(xml: str) -> str:
     return transkribus_metadata_tag_pattern.sub("", xml)
 
 
-def dataset_generator_transkribus(root: Path, collections: Sequence[int]) -> Generator[dict[str, any], None, None]:
+def dataset_generator_transkribus(root: Path, collections: Sequence[int]) -> Generator[dict[str, Any], None, None]:
     for metadata_path in find_file(root.resolve(), "metadata.xml"):
         metadata_root: Path = metadata_path.parent
         metadata: dict = parse_xml(metadata_path.read_text("utf-8"), force_list=("colList",))
