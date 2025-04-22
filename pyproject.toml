@@ -1,6 +1,6 @@
 [project]
-name = "dataset"
-version = "0.1.0"
+name = "stadsarkiv-dataset"
+version = "0.2.0"
 description = ""
 authors = [{ name = "Matteo Campinoti", email = "matteo.campinoti94@gmail.com" }]
 requires-python = "~=3.9"
@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [project.scripts]
-transkribus-dataset = "dataset:app_transkribus"
+transkribus-dataset = "stadsarkiv_dataset:app_transkribus"
 
 [dependency-groups]
 dev = [
